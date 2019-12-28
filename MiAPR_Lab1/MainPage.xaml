@@ -19,7 +19,6 @@
         <StackPanel VerticalAlignment="Center"
                     Orientation="Horizontal"
                     Margin="16,0">
-
             <TextBlock Text="Кол-во образов"/>
             <TextBox x:Name="SamplesQuantityTextBox"
                      Width="100"
@@ -35,7 +34,6 @@
             <Button Content="Расчёт"
                     Click="OnCalculateClick"
                     Margin="8,0,0,0"/>
-
         </StackPanel>
         <Grid Grid.Row="1"
               x:Name="Container"/>

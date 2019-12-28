@@ -51,10 +51,10 @@ namespace MiAPR_Lab1
 			DestroyWin2DContainers();
 			InitializeContainerSize();
 
-			_canvas = new CanvasControl();
-			_canvas.Draw += OnDraw;
+			InitializeDots();
+			InitializeClusters();
 
-			Container.Children.Add(_canvas);
+			InitializeCanvas();
 		}
 
 		private void OnCalculateClick(object sender, RoutedEventArgs e)
@@ -64,10 +64,50 @@ namespace MiAPR_Lab1
 			DestroyWin2DContainers();
 			InitializeContainerSize();
 
+			InitializeCanvas();
+		}
+
+		private void InitializeCanvas()
+		{
 			_canvas = new CanvasControl();
-			_canvas.Draw += OnRedraw;
+			_canvas.Draw += OnDraw;
 
 			Container.Children.Add(_canvas);
+		}
+
+		private void InitializeDots()
+		{
+			var samplesQuantity = GetSamplesQuantity();
+
+			_samplesPoints = new Dot[samplesQuantity];
+
+			for (int i = 0; i < samplesQuantity; i++)
+			{
+				_samplesPoints[i] = new Dot
+				{
+					Position = GenerateRandomPosition(),
+					Color = Colors.Black
+				};
+			}
+		}
+
+		private void InitializeClusters()
+		{
+			var clustersQuantity = GetClustersQuantity();
+
+			_clustersPoints = new Cluster[clustersQuantity];
+
+			for (int i = 0; i < clustersQuantity; i++)
+			{
+				var b = new byte[3];
+				_random.NextBytes(b);
+
+				_clustersPoints[i] = new Cluster
+				{
+					Position = GenerateRandomPosition(),
+					Color = Color.FromArgb(byte.MaxValue, b[0], b[1], b[2])
+				};
+			}
 		}
 
 		private void RecalculateClusterCenter()
@@ -94,9 +134,12 @@ namespace MiAPR_Lab1
 
 		private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)
 		{
-			DrawDots(args.DrawingSession);
+			DrawDotsAndClusters(args.DrawingSession);
 
 			Calculate(args.DrawingSession);
+
+			// Redraw.
+			DrawDots(args.DrawingSession);
 		}
 
 		private void Calculate(CanvasDrawingSession drawingSession)
@@ -122,42 +165,6 @@ namespace MiAPR_Lab1
 
 				samplePoint.Color = closestClass.Color;
 				closestClass.Children.Add(samplePoint);
-				drawingSession.FillCircle(samplePoint.Position, 2, closestClass.Color);
-			}
-		}
-
-		private void DrawDots(CanvasDrawingSession drawingSession)
-		{
-			var samplesQuantity = GetSamplesQuantity();
-			var clustersQuantity = GetClustersQuantity();
-
-			_samplesPoints = new Dot[samplesQuantity];
-			_clustersPoints = new Cluster[clustersQuantity];
-
-			for (int i = 0; i < samplesQuantity; i++)
-			{
-				_samplesPoints[i] = new Dot
-				{
-					Position = GenerateRandomPosition(),
-				};
-
-				drawingSession.FillCircle(_samplesPoints[i].Position, 2, Colors.Black);
-			}
-
-			for (int i = 0; i < clustersQuantity; i++)
-			{
-				var b = new byte[3];
-
-				_random.NextBytes(b);
-
-				_clustersPoints[i] = new Cluster
-				{
-					Position = GenerateRandomPosition(),
-					Color = Color.FromArgb(byte.MaxValue, b[0], b[1], b[2])
-				};
-
-				drawingSession.FillCircle(_clustersPoints[i].Position, 6, _clustersPoints[i].Color);
-				drawingSession.DrawCircle(_clustersPoints[i].Position.X, _clustersPoints[i].Position.Y, 8, Colors.Black, 4);
 			}
 		}
 
@@ -196,20 +203,22 @@ namespace MiAPR_Lab1
 				Math.Pow(p1.Position.Y - p2.Position.Y, 2));
 		}
 
-		private void OnRedraw(CanvasControl sender, CanvasDrawEventArgs args)
+		private void DrawDotsAndClusters(CanvasDrawingSession drawingSession)
 		{
-			RedrawDots(args.DrawingSession);
-
-			Calculate(args.DrawingSession);
+			DrawDots(drawingSession);
+			DrawClusters(drawingSession);
 		}
 
-		private void RedrawDots(CanvasDrawingSession drawingSession)
+		private void DrawDots(CanvasDrawingSession drawingSession)
 		{
 			foreach (var sample in _samplesPoints)
 			{
 				drawingSession.FillCircle(sample.Position, 2, sample.Color);
 			}
+		}
 
+		private void DrawClusters(CanvasDrawingSession drawingSession)
+		{
 			foreach (var cluster in _clustersPoints)
 			{
 				drawingSession.FillCircle(cluster.Position, 6, cluster.Color);
