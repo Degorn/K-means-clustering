@@ -10,7 +10,7 @@ using System.Numerics;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
-namespace MiAPR_Lab1
+namespace MiAPR_Lab2
 {
 	public sealed partial class MainPage : Page
 	{
@@ -24,8 +24,6 @@ namespace MiAPR_Lab1
 		{
 			public ICollection<Dot> Children { get; set; } = new Collection<Dot>();
 
-			public double LastMovedDistance { get; set; }
-
 			public Vector2 GetAvaragePosition()
 			{
 				var avX = Children.Average(x => x.Position.X);
@@ -35,7 +33,7 @@ namespace MiAPR_Lab1
 			}
 		}
 
-		private const double CLUSTERS_MOVE_DIFFERENCE = 0.1;
+		private const string RESULT_TEXT = "Кол-во классов: {0}\n{1}";
 		private const int MAX_ITERATIONS = 20;
 
 		private readonly Random _random = new Random();
@@ -44,8 +42,10 @@ namespace MiAPR_Lab1
 		private int _canvasWidth,
 					_canvasHeight;
 
-		private Dot[] _samplesPoints;
-		private Cluster[] _clustersPoints;
+		private Dot[] _dotsPoints;
+		private ICollection<Cluster> _clustersPoints;
+
+		private bool _isGenerated;
 
 		public MainPage()
 		{
@@ -61,34 +61,113 @@ namespace MiAPR_Lab1
 			InitializeClusters();
 
 			InitializeCanvas();
+
+			_isGenerated = true;
 		}
 
 		private async void OnCalculateClick(object sender, RoutedEventArgs e)
 		{
+			if (!_isGenerated)
+			{
+				return;
+			}
+
 			var iteration = 0;
 
 			while (true)
 			{
-				await Task.Delay(20);
-
-				RecalculateClusterCenter();
+				await Task.Delay(10);
 
 				DestroyWin2DContainers();
 				InitializeContainerSize();
 
+				var newCluster = CalculateNewCluster();
+
+				if (newCluster == null)
+				{
+					InitializeCanvas();
+
+					break;
+				}
+				else
+				{
+					CreateCluster(newCluster.Position);
+
+					ResultTextBlock.Text = string.Format(RESULT_TEXT, _clustersPoints.Count, "Не завершено");
+				}
+
 				InitializeCanvas();
 
-				if (++iteration >= MAX_ITERATIONS ||
-					!CheckIfCentroidsMovedTooLittle())
+				if (++iteration >= MAX_ITERATIONS)
 				{
 					break;
 				}
 			}
+
+			ResultTextBlock.Text = string.Format(RESULT_TEXT, _clustersPoints.Count, "Завершено");
 		}
 
-		private bool CheckIfCentroidsMovedTooLittle()
+		private Cluster CreateCluster(Vector2 position)
 		{
-			return _clustersPoints.Any(x => x.LastMovedDistance > CLUSTERS_MOVE_DIFFERENCE);
+			var b = new byte[3];
+			_random.NextBytes(b);
+
+			var cluster = new Cluster
+			{
+				Position = position,
+				Color = Color.FromArgb(byte.MaxValue, b[0], b[1], b[2]),
+			};
+
+			_clustersPoints.Add(cluster);
+
+			return cluster;
+		}
+
+		private Dot CalculateNewCluster()
+		{
+			var maxDistance = double.MinValue;
+			Dot farthestDot = null;
+
+			var clusters = _clustersPoints
+				.SelectMany(cluster => cluster.Children
+					.Select(clusterChild => (cluster, clusterChild)));
+
+			foreach (var (cluster, clusterChild) in clusters)
+			{
+				var dist = GetDitance(cluster, clusterChild);
+				if (dist > maxDistance)
+				{
+					farthestDot = clusterChild;
+					maxDistance = dist;
+				}
+			}
+
+			var halfOfAvarageClustersDistance = GetHalfOfAvarageClustersDistance();
+			if (maxDistance > halfOfAvarageClustersDistance)
+			{
+				return farthestDot;
+			}
+
+			return null;
+		}
+
+		private double GetHalfOfAvarageClustersDistance()
+		{
+			var connectionsCount = 0;
+			var distanceSum = 0d;
+
+			var clusters = _clustersPoints
+				.SelectMany(cluster =>_clustersPoints
+					.Except(new Cluster[] { cluster })
+					.Select(secondCluster => (cluster, secondCluster)));
+
+			foreach (var (cluster, secondCluster) in clusters)
+			{
+				connectionsCount++;
+				distanceSum += GetDitance(cluster, secondCluster);
+			}
+
+			return distanceSum / connectionsCount / 2;
 		}
 
 		private void InitializeCanvas()
@@ -103,11 +182,11 @@ namespace MiAPR_Lab1
 		{
 			var samplesQuantity = GetSamplesQuantity();
 
-			_samplesPoints = new Dot[samplesQuantity];
+			_dotsPoints = new Dot[samplesQuantity];
 
 			for (int i = 0; i < samplesQuantity; i++)
 			{
-				_samplesPoints[i] = new Dot
+				_dotsPoints[i] = new Dot
 				{
 					Position = GenerateRandomPosition(),
 					Color = Colors.Black
@@ -117,33 +196,31 @@ namespace MiAPR_Lab1
 
 		private void InitializeClusters()
 		{
-			var clustersQuantity = GetClustersQuantity();
+			_clustersPoints = new Collection<Cluster>();
 
-			_clustersPoints = new Cluster[clustersQuantity];
+			var randomDot = _dotsPoints[_random.Next(_dotsPoints.Count())];
+			var cluster = CreateCluster(randomDot.Position);
 
-			for (int i = 0; i < clustersQuantity; i++)
-			{
-				var b = new byte[3];
-				_random.NextBytes(b);
-
-				_clustersPoints[i] = new Cluster
-				{
-					Position = GenerateRandomPosition(),
-					Color = Color.FromArgb(byte.MaxValue, b[0], b[1], b[2])
-				};
-			}
+			var furtherestDot = GetFurtherestDot(cluster);
+			CreateCluster(furtherestDot.Position);
 		}
 
-		private void RecalculateClusterCenter()
+		private Dot GetFurtherestDot(Dot dot)
 		{
-			foreach (var item in _clustersPoints)
+			var maxDistance = double.MinValue;
+			Dot resultDot = null;
+
+			foreach (var dotPoint in _dotsPoints)
 			{
-				var oldPosition = item.Position;
-
-				item.Position = item.GetAvaragePosition();
-
-				item.LastMovedDistance = GetDitance(item.Position, oldPosition);
+				var distance = GetDitance(dot, dotPoint);
+				if (distance > maxDistance)
+				{
+					maxDistance = distance;
+					resultDot = dotPoint;
+				}
 			}
+
+			return resultDot;
 		}
 
 		private void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -177,7 +254,7 @@ namespace MiAPR_Lab1
 				item.Children.Clear();
 			}
 
-			foreach (var samplePoint in _samplesPoints)
+			foreach (var samplePoint in _dotsPoints)
 			{
 				double minDist = double.MaxValue;
 				Cluster closestClass = null;
@@ -196,16 +273,11 @@ namespace MiAPR_Lab1
 			}
 		}
 
-		private int GetClustersQuantity()
-		{
-			return GetTextBoxNumberValue(ClassesQuantityTextBox);
-		}
-
 		private int GetSamplesQuantity()
 		{
 			return GetTextBoxNumberValue(SamplesQuantityTextBox);
 		}
-		
+
 		private int GetTextBoxNumberValue(TextBox textBox)
 		{
 			return int.TryParse(textBox.Text, out var result)
@@ -244,7 +316,7 @@ namespace MiAPR_Lab1
 
 		private void DrawDots(CanvasDrawingSession drawingSession)
 		{
-			foreach (var sample in _samplesPoints)
+			foreach (var sample in _dotsPoints)
 			{
 				drawingSession.FillCircle(sample.Position, 2, sample.Color);
 			}

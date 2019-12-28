@@ -1,0 +1,44 @@
+﻿<Page
+    x:Class="MiAPR_Lab2.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MiAPR_Lab2"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Unloaded="OnPageUnloaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Margin="16,0">
+            <TextBlock Text="Кол-во образов"/>
+            <TextBox x:Name="SamplesQuantityTextBox"
+                     Width="100"
+                     Text="50000"/>
+            <Button Content="Сгенерировать"
+                    Click="OnGenerateClick"
+                    Margin="12,0,0,0"/>
+            <Button Content="Расчёт"
+                    Click="OnCalculateClick"
+                    Margin="8,0,0,0"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1"
+                    VerticalAlignment="Center">
+            <TextBlock x:Name="ResultTextBlock"/>
+        </StackPanel>
+        <Grid Grid.Row="1"
+              Grid.ColumnSpan="2"
+              x:Name="Container"/>
+    </Grid>
+</Page>
