@@ -8,6 +8,8 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using System.Numerics;
 using System.Collections.ObjectModel;
+using Windows.UI.Core;
+using System.Threading.Tasks;
 
 namespace MiAPR_Lab1
 {
@@ -23,6 +25,8 @@ namespace MiAPR_Lab1
 		{
 			public ICollection<Dot> Children { get; set; } = new Collection<Dot>();
 
+			public double LastMovedDistance { get; set; }
+
 			public Vector2 GetAvaragePosition()
 			{
 				var avX = Children.Average(x => x.Position.X);
@@ -31,6 +35,9 @@ namespace MiAPR_Lab1
 				return new Vector2(avX, avY);
 			}
 		}
+
+		private const double CLUSTERS_MOVE_DIFFERENCE = 0.1;
+		private const int MAX_ITERATIONS = 20;
 
 		private readonly Random _random = new Random();
 		private CanvasControl _canvas;
@@ -57,14 +64,32 @@ namespace MiAPR_Lab1
 			InitializeCanvas();
 		}
 
-		private void OnCalculateClick(object sender, RoutedEventArgs e)
+		private async void OnCalculateClick(object sender, RoutedEventArgs e)
 		{
-			RecalculateClusterCenter();
+			var iteration = 0;
 
-			DestroyWin2DContainers();
-			InitializeContainerSize();
+			while (true)
+			{
+				await Task.Delay(20);
 
-			InitializeCanvas();
+				RecalculateClusterCenter();
+
+				DestroyWin2DContainers();
+				InitializeContainerSize();
+
+				InitializeCanvas();
+
+				if (++iteration >= MAX_ITERATIONS ||
+					!CheckIfCentroidsMovedTooLittle())
+				{
+					break;
+				}
+			}
+		}
+
+		private bool CheckIfCentroidsMovedTooLittle()
+		{
+			return _clustersPoints.Any(x => x.LastMovedDistance > CLUSTERS_MOVE_DIFFERENCE);
 		}
 
 		private void InitializeCanvas()
@@ -114,7 +139,11 @@ namespace MiAPR_Lab1
 		{
 			foreach (var item in _clustersPoints)
 			{
+				var oldPosition = item.Position;
+
 				item.Position = item.GetAvaragePosition();
+
+				item.LastMovedDistance = GetDitance(item.Position, oldPosition);
 			}
 		}
 
@@ -198,9 +227,14 @@ namespace MiAPR_Lab1
 
 		private double GetDitance(Dot p1, Dot p2)
 		{
+			return GetDitance(p1.Position, p2.Position);
+		}
+
+		private double GetDitance(Vector2 p1, Vector2 p2)
+		{
 			return Math.Sqrt(
-				Math.Pow(p1.Position.X - p2.Position.X, 2) +
-				Math.Pow(p1.Position.Y - p2.Position.Y, 2));
+				Math.Pow(p1.X - p2.X, 2) +
+				Math.Pow(p1.Y - p2.Y, 2));
 		}
 
 		private void DrawDotsAndClusters(CanvasDrawingSession drawingSession)
