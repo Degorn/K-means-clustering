@@ -65,7 +65,7 @@ namespace MiAPR_Lab7
 		{
 			ClearContainer();
 
-			var val = _random.Next(2);
+			var val = _random.Next(3);
 			switch (val)
 			{
 				case 0:
@@ -73,6 +73,9 @@ namespace MiAPR_Lab7
 					break;
 				case 1:
 					GenerateRhombus();
+					break;
+				case 2:
+					GenerateSpiral();
 					break;
 				default:
 					break;
@@ -182,6 +185,86 @@ namespace MiAPR_Lab7
 			};
 			_diagonalLinesUp.Add(line4);
 			Container.Children.Add(line4);
+		}
+
+		private void GenerateSpiral()
+		{
+			var line0 = new Line
+			{
+				X1 = 100,
+				Y1 = 200,
+				X2 = 200,
+				Y2 = 200,
+				Stroke = new SolidColorBrush(Colors.Black)
+			};
+			_horizontalLines.Add(line0);
+			Container.Children.Add(line0);
+
+			var line1 = new Line
+			{
+				X1 = 200,
+				Y1 = 200,
+				X2 = 300,
+				Y2 = 200,
+				Stroke = new SolidColorBrush(Colors.Black)
+			};
+			_horizontalLines.Add(line1);
+			Container.Children.Add(line1);
+
+			var line2 = new Line
+			{
+				X1 = 300,
+				Y1 = 200,
+				X2 = 350,
+				Y2 = 250,
+				Stroke = new SolidColorBrush(Colors.Black)
+			};
+			_diagonalLinesDown.Add(line2);
+			Container.Children.Add(line2);
+
+			var line3 = new Line
+			{
+				X1 = 350,
+				Y1 = 250,
+				X2 = 350,
+				Y2 = 350,
+				Stroke = new SolidColorBrush(Colors.Black)
+			};
+			_verticalLines.Add(line3);
+			Container.Children.Add(line3);
+
+			var line4 = new Line
+			{
+				X1 = 350,
+				Y1 = 350,
+				X2 = 300,
+				Y2 = 400,
+				Stroke = new SolidColorBrush(Colors.Black)
+			};
+			_diagonalLinesUp.Add(line4);
+			Container.Children.Add(line4);
+
+			var line5 = new Line
+			{
+				X1 = 300,
+				Y1 = 400,
+				X2 = 250,
+				Y2 = 350,
+				Stroke = new SolidColorBrush(Colors.Black)
+			};
+			_diagonalLinesDown.Add(line5);
+			Container.Children.Add(line5);
+
+			var line6 = new Line
+			{
+				X1 = 250,
+				Y1 = 350,
+				X2 = 300,
+				Y2 = 300,
+				Stroke = new SolidColorBrush(Colors.Black)
+			};
+			_diagonalLinesUp.Add(line6);
+			Container.Children.Add(line6);
 		}
 
 		private void InitializeTypeDictionary()
