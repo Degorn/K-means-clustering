@@ -9,6 +9,43 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="5*"/>
+        </Grid.ColumnDefinitions>
 
+        <StackPanel Padding="8">
+            <Button Content="Сгенерировать"
+                    Click="OnClick"
+                    Margin="0,8"/>
+
+            <ComboBox x:Name="ComboBoxFrom"
+                      ItemsSource="{x:Bind FromTransformList, Mode=OneWay}"
+                      Width="120">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:VarType">
+                        <TextBlock Text="{x:Bind Text, Mode=OneWay}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock Text="Заменить на"
+                       Margin="0,4,0,0"/>
+            <ComboBox x:Name="ComboBoxTo"
+                      ItemsSource="{x:Bind TransformList, Mode=OneWay}"
+                      Width="120">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:VarType">
+                        <TextBlock Text="{x:Bind Text, Mode=OneWay}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <Button Content="Заменить"
+                    Click="OnChangeClick"
+                    Margin="0,8"/>
+        </StackPanel>
+        <Canvas x:Name="Container"
+                Grid.Column="1">
+        </Canvas>
     </Grid>
 </Page>
