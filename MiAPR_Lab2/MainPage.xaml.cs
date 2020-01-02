@@ -9,6 +9,7 @@ using Windows.UI.Xaml.Controls;
 using System.Numerics;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Windows.UI.Popups;
 
 namespace MiAPR_Lab2
 {
@@ -69,6 +70,7 @@ namespace MiAPR_Lab2
 		{
 			if (!_isGenerated)
 			{
+				ShowMessage("Данные не были сгенерированы");
 				return;
 			}
 
@@ -280,9 +282,16 @@ namespace MiAPR_Lab2
 
 		private int GetTextBoxNumberValue(TextBox textBox)
 		{
-			return int.TryParse(textBox.Text, out var result)
-				? result
-				: default;
+			var isSucceed = int.TryParse(textBox.Text, out var result);
+
+			if (isSucceed && result > 0)
+			{
+				return result;
+			}
+
+			ShowMessage($"Неверное значение текстового поля {textBox.Name}. Значение должно быть > 0.\nВзято стандартное");
+
+			return 1;
 		}
 
 		private void InitializeContainerSize()
@@ -329,6 +338,12 @@ namespace MiAPR_Lab2
 				drawingSession.FillCircle(cluster.Position, 6, cluster.Color);
 				drawingSession.DrawCircle(cluster.Position.X, cluster.Position.Y, 8, Colors.Black, 4);
 			}
+		}
+
+		private async void ShowMessage(string message)
+		{
+			var messageDialog = new MessageDialog(message);
+			await messageDialog.ShowAsync();
 		}
 	}
 }

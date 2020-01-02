@@ -9,6 +9,7 @@ using Windows.UI.Xaml.Controls;
 using System.Numerics;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Windows.UI.Popups;
 
 namespace MiAPR_Lab1
 {
@@ -47,6 +48,8 @@ namespace MiAPR_Lab1
 		private Dot[] _samplesPoints;
 		private Cluster[] _clustersPoints;
 
+		private bool _generated;
+
 		public MainPage()
 		{
 			this.InitializeComponent();
@@ -61,10 +64,18 @@ namespace MiAPR_Lab1
 			InitializeClusters();
 
 			InitializeCanvas();
+
+			_generated = true;
 		}
 
 		private async void OnCalculateClick(object sender, RoutedEventArgs e)
 		{
+			if (!_generated)
+			{
+				ShowMessage("Данные не были сгенерированы");
+				return;
+			}
+
 			var iteration = 0;
 
 			while (true)
@@ -191,6 +202,11 @@ namespace MiAPR_Lab1
 					}
 				}
 
+				if (closestClass == null)
+				{
+					return;
+				}
+
 				samplePoint.Color = closestClass.Color;
 				closestClass.Children.Add(samplePoint);
 			}
@@ -208,9 +224,16 @@ namespace MiAPR_Lab1
 		
 		private int GetTextBoxNumberValue(TextBox textBox)
 		{
-			return int.TryParse(textBox.Text, out var result)
-				? result
-				: default;
+			var isSucceed = int.TryParse(textBox.Text, out var result);
+
+			if (isSucceed && result > 0)
+			{
+				return result;
+			}
+
+			ShowMessage($"Неверное значение текстового поля {textBox.Name}. Значение должно быть > 0.\nВзято стандартное");
+
+			return 1;
 		}
 
 		private void InitializeContainerSize()
@@ -257,6 +280,12 @@ namespace MiAPR_Lab1
 				drawingSession.FillCircle(cluster.Position, 6, cluster.Color);
 				drawingSession.DrawCircle(cluster.Position.X, cluster.Position.Y, 8, Colors.Black, 4);
 			}
+		}
+
+		private async void ShowMessage(string message)
+		{
+			var messageDialog = new MessageDialog(message);
+			await messageDialog.ShowAsync();
 		}
 	}
 }
